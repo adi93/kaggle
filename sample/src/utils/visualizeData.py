@@ -13,7 +13,6 @@ def tabularData(data, delimiter=",", quoteCharacter="\""):
     :param data: read from a file or url
     :return:
     """
-    tabData = []
     begin = 1 if isinstance(data[0][0], str) is True else 0
     tabData = list(csv.reader(data[begin:]))
     return tabData
@@ -52,7 +51,8 @@ def summaryStatistics(data, columnIndex, columnType='NUMERICAL', percentile=4):
     :param columnIndex: index of column for which summary is to be generated
     :param columnType: 'NUMERICAL' or 'CATEGORICAL'
     :param percentile: percentiles
-    :return: null
+    :return: dictionary containing percentiles, and (mean, variance)
+            if NUMERICAL, (categoriesCount) otherwise
     """
     if columnType is 'NUMERICAL':
         mean, variance, percentile = __summaryStatisticsNumerical(data, columnIndex, percentile)
@@ -61,12 +61,13 @@ def summaryStatistics(data, columnIndex, columnType='NUMERICAL', percentile=4):
         categoryCount = __summaryStatisticsCategorical(data, columnIndex)
         return {"categoriesCount": categoryCount}
 
+
 def test_summary_stats():
-    targetFile = ("/run/media/aditya/EXTRA/repos/kaggle/tests/resources/train.csv")
+    targetFile = "/run/media/aditya/EXTRA/repos/kaggle/tests/resources/train.csv"
     with open(targetFile) as targetData:
         data = tabularData(targetData.readlines())
         summary1 = summaryStatistics(data, 9, percentile=19)
-        print (summary1)
+        print(summary1)
 
 
 def plotQuartile(data, columnIndex):
@@ -76,5 +77,19 @@ def plotQuartile(data, columnIndex):
     stats.probplot(colData, dist="norm", plot=pylab)
     pylab.show()
 
-    pass
-test_summary_stats()
+
+def parallelAttributeGraph(data, categories, categoryColumn = 1):
+    for i in range(len(data)):
+        if (data[i][categoryColumn] == "0")
+
+
+def main():
+    n = int(input("Enter the column index: "))
+    with open("/run/media/aditya/EXTRA/repos/kaggle/sample/resources/projects/titanic/train.csv") as targetData:
+        tabData = tabularData(targetData.readlines())
+    summary1 = summaryStatistics(tabData, 9, percentile=19)
+    print(tabData)
+    plotQuartile(tabData, n)
+
+if __name__ == '__main__':
+    main()
