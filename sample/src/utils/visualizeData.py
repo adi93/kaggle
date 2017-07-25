@@ -1,73 +1,14 @@
-import urllib
-import sys
+from ast import literal_eval
+
+import matplotlib.pyplot as plot
 import numpy as np
-import csv
+import pandas as pd
 import pylab
 import scipy.stats as stats
+from pandas.plotting import *
 
-
-def tabularData(data, delimiter=",", quoteCharacter="\""):
-    """
-    Converts data into 2D matrix form, where rows denote samples, and
-    columns denote features.
-    :param data: read from a file or url
-    :return:
-    """
-    begin = 1 if isinstance(data[0][0], str) is True else 0
-    tabData = list(csv.reader(data[begin:]))
-    return tabData
-
-
-def __summaryStatisticsNumerical(data, columnIndex, percentile):
-    mean, variance, percentileBoundary = 0, 0, []
-    colData = []
-    for row in data:
-        colData.append(float(row[columnIndex]))
-
-    colArray = np.array(colData)
-    mean = np.mean(colArray)
-    variance = np.std(colArray)
-    for i in range(percentile + 1):
-        percentileBoundary.append(np.percentile(colArray, i * 100 // percentile))
-    return [mean, variance, percentileBoundary]
-
-
-def __summaryStatisticsCategorical(data, column):
-    categoryMap = {}
-    for row in data:
-        if categoryMap.get(row[column]) is None:
-            categoryMap[row[column]] = 1
-        else:
-            categoryMap[row[column]] = categoryMap.get(row[column]) + 1
-    return categoryMap
-
-
-def summaryStatistics(data, columnIndex, columnType='NUMERICAL', percentile=4):
-    """
-    Prints statistical info about a particular feature, like mean, variance and
-    percentiles
-    :param data: 2d matrix, where row represent data point, and column represent
-     features.
-    :param columnIndex: index of column for which summary is to be generated
-    :param columnType: 'NUMERICAL' or 'CATEGORICAL'
-    :param percentile: percentiles
-    :return: dictionary containing percentiles, and (mean, variance)
-            if NUMERICAL, (categoriesCount) otherwise
-    """
-    if columnType is 'NUMERICAL':
-        mean, variance, percentile = __summaryStatisticsNumerical(data, columnIndex, percentile)
-        return {"mean": mean, "variance": variance, "percentile": percentile}
-    else:
-        categoryCount = __summaryStatisticsCategorical(data, columnIndex)
-        return {"categoriesCount": categoryCount}
-
-
-def test_summary_stats():
-    targetFile = "/run/media/aditya/EXTRA/repos/kaggle/tests/resources/train.csv"
-    with open(targetFile) as targetData:
-        data = tabularData(targetData.readlines())
-        summary1 = summaryStatistics(data, 9, percentile=19)
-        print(summary1)
+targetFile = "/run/media/aditya/EXTRA/repos/kaggle/tests/resources/train.csv"
+fields = ['Survived', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
 
 
 def plotQuartile(data, columnIndex):
@@ -78,18 +19,62 @@ def plotQuartile(data, columnIndex):
     pylab.show()
 
 
-def parallelAttributeGraph(data, categories, categoryColumn = 1):
-    for i in range(len(data)):
-        if (data[i][categoryColumn] == "0")
+def plotDataFrame(dataFrame, plotting_function, *functionArgs, **keyArgs):
+    plot.figure()
+    plotting_function(dataFrame, *functionArgs, **keyArgs)
+    plot.show()
+
+
+def convertCategoricalToNumerical(dataFrame, columns=None):
+    """
+
+    :type dataFrame: pandas.DataFrame
+    :type columns: list
+    """
+    if columns is None:
+        columns = []
+    catColumns = set()
+    for column in dataFrame.columns:
+        if (dataFrame[column]).dtype is np.dtype(object):
+            dataFrame[column] = dataFrame[column].astype('category')
+    for column in columns:
+        dataFrame[column] = dataFrame[column].astype('category')
+    cat_columns = dataFrame.select_dtypes(['category']).columns
+    dataFrame[cat_columns] = dataFrame[cat_columns].apply(lambda x: x.cat.codes)
+    return dataFrame
+
+
+def getNormalizedForm(df):
+    return (df - df.mean()) / (df.max() - df.min())
+
+
+def corrMatrixPlot(dataFrame):
+    """
+
+    :type dataFrame: pandas.DataFrame
+    """
+    corMat = dataFrame.corr(method='kendall')
+    plot.pcolor(corMat)
+    plot.show()
 
 
 def main():
-    n = int(input("Enter the column index: "))
-    with open("/run/media/aditya/EXTRA/repos/kaggle/sample/resources/projects/titanic/train.csv") as targetData:
-        tabData = tabularData(targetData.readlines())
-    summary1 = summaryStatistics(tabData, 9, percentile=19)
-    print(tabData)
-    plotQuartile(tabData, n)
+    function_mappings = {
+        'scatter_matrix': scatter_matrix,
+        'parallel_coordinates': parallel_coordinates,
+        'andrews_curves': andrews_curves,
+        'lag_plot': lag_plot,
+        'radviz': radviz
+    }
+    df = pd.read_csv(targetFile, skipinitialspace=True, usecols=fields)
+    df = df.dropna(how='any')
+    df = convertCategoricalToNumerical(df)
+    df_norm = getNormalizedForm(df)
+    plottingFunction = function_mappings[input("Enter function name: ")]
+    keyArgs = literal_eval(input("Enter args, if any in list form: "))
+    keyWords = literal_eval(input("Enter args, if any in dictionary form: "))
+    plotDataFrame(df_norm, plottingFunction, *keyArgs, **keyWords)
 
-if __name__ == '__main__':
-    main()
+
+df = pd.read_csv(targetFile, skipinitialspace=True, usecols=fields)
+corrMatrixPlot(df)
